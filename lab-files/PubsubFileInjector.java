@@ -14,141 +14,78 @@
  * the License.
  */
 
-package com.google.cloud.dataflow.starter;
+package my.group.id;
 
-import com.google.api.services.pubsub.Pubsub;
-import com.google.api.services.pubsub.model.PublishRequest;
-import com.google.api.services.pubsub.model.PubsubMessage;
-import com.google.cloud.dataflow.sdk.Pipeline;
-import com.google.cloud.dataflow.sdk.io.TextIO;
-import com.google.cloud.dataflow.sdk.options.DataflowPipelineOptions;
-import com.google.cloud.dataflow.sdk.options.Description;
-import com.google.cloud.dataflow.sdk.options.PipelineOptions;
-import com.google.cloud.dataflow.sdk.options.PipelineOptionsFactory;
-import com.google.cloud.dataflow.sdk.options.Validation;
-import com.google.cloud.dataflow.sdk.transforms.DoFn;
-import com.google.cloud.dataflow.sdk.transforms.IntraBundleParallelization;
-import com.google.cloud.dataflow.sdk.util.Transport;
-import com.google.common.collect.ImmutableMap;
+import org.apache.beam.sdk.Pipeline;
+import org.apache.beam.sdk.coders.StringUtf8Coder;
+import org.apache.beam.sdk.io.PubsubIO;
+import org.apache.beam.sdk.io.TextIO;
+import org.apache.beam.sdk.options.Description;
+import org.apache.beam.sdk.options.PipelineOptions;
+import org.apache.beam.sdk.options.PipelineOptionsFactory;
+import org.apache.beam.sdk.options.Validation;
+import org.apache.beam.sdk.transforms.DoFn;
+import org.apache.beam.sdk.transforms.ParDo;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
-import java.util.Arrays;
 
 /**
- * A batch Dataflow pipeline for injecting a set of GCS files into
- * a PubSub topic line by line. Empty lines are skipped.
+ * A batch Dataflow pipeline for injecting a set of GCS files into a PubSub topic line by line.
+ * Empty lines are skipped.
  *
- * <p> This is useful for testing streaming
- * pipelines. Note that since batch pipelines might retry chunks, this
- * does _not_ guarantee exactly-once injection of file data. Some lines may
- * be published multiple times.
- * </p>
+ * <p>This is useful for testing streaming pipelines. Note that since batch pipelines might retry
+ * chunks, this does _not_ guarantee exactly-once injection of file data. Some lines may be
+ * published multiple times.
  */
 public class PubsubFileInjector {
-
-  /**
-   * An incomplete {@code PubsubFileInjector} transform with unbound output topic.
-   */
-  public static class Unbound {
-    private final String timestampLabelKey;
-
-    Unbound() {
-      this.timestampLabelKey = null;
-    }
-
-    Unbound(String timestampLabelKey) {
-      this.timestampLabelKey = timestampLabelKey;
-    }
-
-    Unbound withTimestampLabelKey(String timestampLabelKey) {
-      return new Unbound(timestampLabelKey);
-    }
-
-    public Bound publish(String outputTopic) {
-      return new Bound(outputTopic, timestampLabelKey);
-    }
-  }
+  private static final Logger LOG = LoggerFactory.getLogger(PubsubFileInjector.class);
 
   /** A DoFn that publishes non-empty lines to Google Cloud PubSub. */
-  public static class Bound extends DoFn<String, Void> {
-    private static final long serialVersionUID = 0;
-
-    private final String outputTopic;
-    private final String timestampLabelKey;
-    public transient Pubsub pubsub;
-
-    public Bound(String outputTopic, String timestampLabelKey) {
-      this.outputTopic = outputTopic;
-      this.timestampLabelKey = timestampLabelKey;
-    }
-
-    @Override
-    public void startBundle(Context context) {
-      this.pubsub =
-          Transport.newPubsubClient(context.getPipelineOptions().as(DataflowPipelineOptions.class))
-              .build();
-    }
-
-    @Override
+  public static class FilterHeaderAndEmpties extends DoFn<String, String> {
+    @ProcessElement
     public void processElement(ProcessContext c) throws IOException {
-      if (c.element().isEmpty()) {
-        return;
+      LOG.info("Got: " + c.element());
+      if (!c.element().isEmpty() && !c.element().startsWith("Timestamp")) {
+        LOG.info("Emitting " + c.element());
+        c.output(c.element());
+      } else {
+        LOG.info("Not emitting: " + c.element());
       }
-      PubsubMessage pubsubMessage = new PubsubMessage();
-      pubsubMessage.encodeData(c.element().getBytes());
-      if (timestampLabelKey != null) {
-        pubsubMessage.setAttributes(
-            ImmutableMap.of(timestampLabelKey, Long.toString(c.timestamp().getMillis())));
-      }
-      PublishRequest publishRequest = new PublishRequest();
-      publishRequest.setMessages(Arrays.asList(pubsubMessage));
-      this.pubsub.projects().topics().publish(outputTopic, publishRequest).execute();
     }
   }
 
-  /**
-   * Creates a {@code PubsubFileInjector} transform with the given timestamp label key.
-   */
-  public static Unbound withTimestampLabelKey(String timestampLabelKey) {
-    return new Unbound(timestampLabelKey);
-  }
-
-  /**
-   * Creates a {@code PubsubFileInjector} transform that publishes to the given output topic.
-   */
-  public static Bound publish(String outputTopic) {
-    return new Unbound().publish(outputTopic);
-  }
-
-  /**
-   * Command line parameter options.
-   */
+  /** Command line parameter options. */
   private interface PubsubFileInjectorOptions extends PipelineOptions {
     @Description("GCS location of files.")
     @Validation.Required
     String getInput();
+
     void setInput(String value);
 
     @Description("Topic to publish on.")
     @Validation.Required
     String getOutputTopic();
+
     void setOutputTopic(String value);
   }
 
-  /**
-   * Sets up and starts streaming pipeline.
-   */
+  /** Sets up and starts streaming pipeline. */
   public static void main(String[] args) {
-    PubsubFileInjectorOptions options = PipelineOptionsFactory.fromArgs(args)
-        .withValidation()
-        .as(PubsubFileInjectorOptions.class);
+    PubsubFileInjectorOptions options =
+        PipelineOptionsFactory.fromArgs(args).withValidation().as(PubsubFileInjectorOptions.class);
 
     Pipeline pipeline = Pipeline.create(options);
 
     pipeline
         .apply(TextIO.Read.from(options.getInput()))
-        .apply(IntraBundleParallelization.of(PubsubFileInjector.publish(options.getOutputTopic()))
-            .withMaxParallelism(20));
+        .apply(ParDo.of(new FilterHeaderAndEmpties()))
+        .apply(
+            PubsubIO.<String>write()
+                .topic(options.getOutputTopic())
+                .withCoder(StringUtf8Coder.of())
+                .timestampLabel("timestamp"));
 
     pipeline.run();
   }
