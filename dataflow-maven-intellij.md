@@ -12,7 +12,7 @@ Select Maven, and check the "Create from archetype" checkbox:
 
 ![Create new Project](images/maven_project_from_archetype.png)
 
-Next, click the "Add Archetype" button:
+Next, click the "Add Archetype" button, and populate the fields as shown:
 
 ![Add Archetype](images/add_archetype_dialog.png)
 
