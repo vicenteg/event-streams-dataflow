@@ -12,7 +12,7 @@
  * the License.
  */
 
-package com.google.cloud.dataflow.starter;
+package my.group.id;
 
 import com.google.api.client.googleapis.json.GoogleJsonResponseException;
 import com.google.api.client.googleapis.services.AbstractGoogleClientRequest;
@@ -29,17 +29,20 @@ import com.google.api.services.bigquery.model.TableSchema;
 import com.google.api.services.dataflow.Dataflow;
 import com.google.api.services.pubsub.Pubsub;
 import com.google.api.services.pubsub.model.Topic;
-import com.google.cloud.dataflow.sdk.Pipeline;
-import com.google.cloud.dataflow.sdk.PipelineResult;
-import com.google.cloud.dataflow.sdk.io.TextIO;
-import com.google.cloud.dataflow.sdk.options.BigQueryOptions;
-import com.google.cloud.dataflow.sdk.options.DataflowPipelineOptions;
-import com.google.cloud.dataflow.sdk.runners.DataflowPipelineJob;
-import com.google.cloud.dataflow.sdk.runners.DataflowPipelineRunner;
-import com.google.cloud.dataflow.sdk.runners.DirectPipelineRunner;
-import com.google.cloud.dataflow.sdk.transforms.IntraBundleParallelization;
-import com.google.cloud.dataflow.sdk.util.MonitoringUtil;
-import com.google.cloud.dataflow.sdk.util.Transport;
+import org.apache.beam.runners.dataflow.DataflowPipelineJob;
+import org.apache.beam.runners.dataflow.DataflowRunner;
+import org.apache.beam.runners.dataflow.options.DataflowPipelineOptions;
+import org.apache.beam.runners.dataflow.util.MonitoringUtil;
+import org.apache.beam.runners.direct.DirectRunner;
+import org.apache.beam.sdk.Pipeline;
+import org.apache.beam.sdk.PipelineResult;
+import org.apache.beam.sdk.io.TextIO;
+import org.apache.beam.sdk.options.BigQueryOptions;
+import org.apache.beam.sdk.transforms.DoFn;
+import org.apache.beam.sdk.transforms.ParDo;
+import org.apache.beam.sdk.util.Transport;
+import org.joda.time.Duration;
+
 
 import java.io.IOException;
 import java.util.Collection;
@@ -253,13 +256,13 @@ public class DataflowExampleUtils {
    */
   public void setupRunner() {
     if (options.isStreaming()) {
-      if (options.getRunner() == DirectPipelineRunner.class) {
+      if (options.getRunner() == DirectRunner.class) {
         throw new IllegalArgumentException(
-          "Processing of unbounded input sources is not supported with the DirectPipelineRunner.");
+          "Processing of unbounded input sources is not supported with the DirectRunner.");
       }
       // In order to cancel the pipelines automatically,
-      // {@literal DataflowPipelineRunner} is forced to be used.
-      options.setRunner(DataflowPipelineRunner.class);
+      // {@literal DataflowRunner} is forced to be used.
+      options.setRunner(DataflowRunner.class);
     }
   }
 
@@ -270,16 +273,14 @@ public class DataflowExampleUtils {
    * into the Google Cloud Pub/Sub topic.
    */
   public void runInjectorPipeline(String inputFile, String topic) {
-    DataflowPipelineOptions copiedOptions = options.cloneAs(DataflowPipelineOptions.class);
+    DataflowPipelineOptions copiedOptions = options.as(DataflowPipelineOptions.class);
     copiedOptions.setStreaming(false);
     copiedOptions.setNumWorkers(
         options.as(ExamplePubsubTopicOptions.class).getInjectorNumWorkers());
     copiedOptions.setJobName(options.getJobName() + "-injector");
     Pipeline injectorPipeline = Pipeline.create(copiedOptions);
     injectorPipeline.apply(TextIO.Read.from(inputFile))
-                    .apply(IntraBundleParallelization
-                        .of(PubsubFileInjector.publish(topic))
-                        .withMaxParallelism(20));
+        .apply(ParDo.of(PubsubFileInjector.publish(topic)));
     DataflowPipelineJob injectorJob = (DataflowPipelineJob) injectorPipeline.run();
     jobsToCancel.add(injectorJob);
   }
@@ -312,7 +313,7 @@ public class DataflowExampleUtils {
         addShutdownHook(jobsToCancel);
       }
       try {
-        job.waitToFinish(-1, TimeUnit.SECONDS, new MonitoringUtil.PrintHandler(System.out));
+        job.waitUntilFinish(Duration.millis(-1L));
       } catch (Exception e) {
         throw new RuntimeException("Failed to wait for job to finish: " + job.getJobId());
       }

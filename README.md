@@ -6,6 +6,22 @@
 2. [Install Google Cloud SDK](https://cloud.google.com/sdk/)
 3. Software: Eclipse and Java 7 JRE/JDK (Java development kit). Installation instructions [here](http://www.eclipse.org/downloads/packages/eclipse-ide-java-developers/marsr).
 
+###
+
+Create a new project. If you create a new project, be sure to select it in your gcloud environment:
+
+```
+gcloud config set project <my-new-project-name>
+```
+
+Create a bucket for yourself. Change <your-initials> to your initials, or something else. Buckets need to be uniquely named.
+
+```
+gsutil mb gs://df-ws-<your-initials>
+```
+
+
+
 #### Download Lab Files
 The final step is to download the lab files required for building the WordCount and Traffic sensor pipelines. 
 
@@ -17,6 +33,26 @@ The final step is to download the lab files required for building the WordCount 
 or
     
 2. Download via this zipped [file](https://github.com/james-google/event-streams-dataflow/archive/master.zip), and extract to the folder of your choice.
+
+## Lab Exercise 1: Hello World with Dataflow on IntelliJ
+
+We will use a Maven project in IntelliJ. We'll create a new project from a Maven archetype, and then execute an example pipeline.
+
+First, create a new Maven project:
+
+Check the box to create from archetype:
+
+Add an archetype:
+
+Tell maven your group and artifact IDs:
+
+Confirm the settings look good:
+
+And create the project:
+
+Once done, IntelliJ will tell you need to import changes. You can enable auto-import if you like, or do the import each time you're prompted.
+
+
 
 ## Lab Exercise 1: Hello World with Dataflow
 

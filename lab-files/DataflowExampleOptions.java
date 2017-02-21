@@ -12,16 +12,16 @@
  * the License.
  */
 
-package com.google.cloud.dataflow.starter;
+package my.group.id;
 
-import com.google.cloud.dataflow.sdk.options.DataflowPipelineOptions;
-import com.google.cloud.dataflow.sdk.options.Default;
-import com.google.cloud.dataflow.sdk.options.Description;
+import org.apache.beam.sdk.options.PipelineOptions;
+import org.apache.beam.sdk.options.Default;
+import org.apache.beam.sdk.options.Description;
 
 /**
  * Options that can be used to configure the Dataflow examples.
  */
-public interface DataflowExampleOptions extends DataflowPipelineOptions {
+public interface DataflowExampleOptions extends PipelineOptions {
   @Description("Whether to keep jobs running on the Dataflow service after local process exit")
   @Default.Boolean(false)
   boolean getKeepJobsRunning();
