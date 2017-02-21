@@ -6,7 +6,7 @@ Please follow the steps at [before you begin](https://cloud.google.com/dataflow/
 
 Start IntelliJ and create a new project. 
 
-![New IntelliJ Project](image/new_intellij_project.png)
+![New IntelliJ Project](images/new_intellij_project.png)
 
 Select Maven, and check the "Create from archetype" checkbox:
 
