@@ -36,7 +36,7 @@ or
 
 # Hello, World!
 
-In this section, choose your adventure. [IntelliJ](#lab-exercise-1-intellij-hello-world-with-dataflow), [Eclipse](#lab-exercise-1-eclipse-hello-world-with-dataflow), or [Maven](#lab-exercise-1-maven-hello-world-with-dataflow).
+In this section, choose your adventure. [IntelliJ](#lab-exercise-1---intellij-hello-world-with-dataflow), [Eclipse](#lab-exercise-1---eclipse-hello-world-with-dataflow), or [Maven](#lab-exercise-1---maven-hello-world-with-dataflow).
 
 ## Lab Exercise 1 - IntelliJ: Hello World with Dataflow
 
