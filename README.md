@@ -2,7 +2,7 @@
 
 ## Prerequisites
 
-1. A Google Cloud Platform Account - if you don’t have a GCP project, please contact coordinators before the training.
+1. A Google Cloud Platform Project - if you don’t have a GCP account, you can [follow the instructions here](https://console.cloud.google.com/freetrial) to set one up.
 2. [Install Google Cloud SDK](https://cloud.google.com/sdk/)
 3. Software: Eclipse and Java 7 JRE/JDK (Java development kit). Installation instructions [here](http://www.eclipse.org/downloads/packages/eclipse-ide-java-developers/marsr).
 
@@ -34,27 +34,15 @@ or
     
 2. Download via this zipped [file](https://github.com/james-google/event-streams-dataflow/archive/master.zip), and extract to the folder of your choice.
 
-## Lab Exercise 1: Hello World with Dataflow on IntelliJ
+# Hello, World!
 
-We will use a Maven project in IntelliJ. We'll create a new project from a Maven archetype, and then execute an example pipeline.
+In this section, choose your adventure. [IntelliJ](#lab-exercise-1-intellij-hello-world-with-dataflow), [Eclipse](#lab-exercise-1-eclipse-hello-world-with-dataflow), or [Maven](#lab-exercise-1-maven-hello-world-with-dataflow).
 
-First, create a new Maven project:
+## Lab Exercise 1 - IntelliJ: Hello World with Dataflow
 
-Check the box to create from archetype:
+If you want to set up and run a starter Dataflow pipeline with IntelliJ, use [this page](dataflow-maven-intellij.md).
 
-Add an archetype:
-
-Tell maven your group and artifact IDs:
-
-Confirm the settings look good:
-
-And create the project:
-
-Once done, IntelliJ will tell you need to import changes. You can enable auto-import if you like, or do the import each time you're prompted.
-
-
-
-## Lab Exercise 1: Hello World with Dataflow
+## Lab Exercise 1 - Eclipse: Hello World with Dataflow
 
 In this first exercise, we'll configure a Hello World sample to ensure your Dataflow environment is up and configured properly. 
 
@@ -68,6 +56,52 @@ When the execution finishes, among other output, the console should contain the 
 3. After these steps are completed, create a Google Cloud Storage (GCS) bucket by navigating to [console.developers.google.com](https://console.developers.google.com) > then select **Storage** > **Cloud Storage** > **Browser** > then click **Create Bucket**.
 4. Provide the name of the staging bucket such as "dataflow-demo", etc (this will be used in the following examples) > then click **Create** with the default values.<br/><br/>
 5. You're now done with the first lab!
+
+## Lab Exercise 1 - Maven: Hello World with Dataflow
+
+We will use this instance to work with the code. We won't work locally (on our laptops) during this session to avoid the inevitable "doesn't work for me" scenarios. Set this instance up ahead of time and power it off if you like, but be aware that you may be responsible for a couple days worth of persistent disk charges.
+
+Create a n1-standard-1 instance using the **Ubuntu 16.04 LTS** image in the Cloud Platform UI.
+
+Launch cloud shell. Run the following, substituting your instance's name as needed:
+
+```
+gcloud compute ssh instance-1
+```
+ 
+You will probably be promted to create an ssh key - follow the prompts. A passphrase for your ssh key is not necessary for this workshop.
+
+Once logged in, update your gcloud components:
+
+```
+gcloud components update
+```
+
+Then install maven, git and python-(pip|virtualenv):
+
+```
+sudo apt-get update
+sudo apt-get install python-pip python-virtualenv git maven openjdk-8-jdk
+```
+
+This will take a couple of minutes.
+
+Confirm that you have java 8:
+
+```
+$ java -version
+openjdk version "1.8.0_121"
+OpenJDK Runtime Environment (build 1.8.0_121-8u121-b13-0ubuntu1.16.04.2-b13)
+OpenJDK 64-Bit Server VM (build 25.121-b13, mixed mode)
+```
+
+Create and source a virtualenv, then install google-cloud-pubsub and google-cloud-storage:
+
+```
+virtualenv ~/.env
+source ~/.env/bin/activate
+pip install --upgrade google-cloud-pubsub google-cloud-storage
+```
 
 
 ## Lab Exercise 2: [optional] WordCount SDK Example
