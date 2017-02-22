@@ -95,14 +95,6 @@ OpenJDK Runtime Environment (build 1.8.0_121-8u121-b13-0ubuntu1.16.04.2-b13)
 OpenJDK 64-Bit Server VM (build 25.121-b13, mixed mode)
 ```
 
-Create and source a virtualenv, then install google-cloud-pubsub and google-cloud-storage:
-
-```
-virtualenv ~/.env
-source ~/.env/bin/activate
-pip install --upgrade google-cloud-pubsub google-cloud-storage
-```
-
 
 ## Lab Exercise 2: [optional] WordCount SDK Example
 
